@@ -1,31 +1,32 @@
-"""
-Embedding model wrapper.
+import os
+import cohere
+import numpy as np
 
-Uses a local sentence-transformers model so the knowledge base can be
-embedded and queried without an extra API call/cost for every retrieval.
-This keeps latency low and avoids coupling retrieval quality to whichever
-LLM provider is configured for generation.
-"""
-
-from functools import lru_cache
-from typing import List
-
-from sentence_transformers import SentenceTransformer
-
-MODEL_NAME = "all-MiniLM-L6-v2"
+co = cohere.Client(os.getenv("COHERE_API_KEY"))
 
 
-@lru_cache(maxsize=1)
-def get_embedding_model() -> SentenceTransformer:
-    """Load the embedding model once and cache it for the process lifetime."""
-    return SentenceTransformer(MODEL_NAME)
+def _normalize(vectors: list[list[float]]) -> list[list[float]]:
+    arr = np.array(vectors, dtype=np.float32)
+    norms = np.linalg.norm(arr, axis=1, keepdims=True)
+    norms[norms == 0] = 1  # avoid divide-by-zero
+    return (arr / norms).tolist()
 
 
-def embed_texts(texts: List[str]) -> List[List[float]]:
-    model = get_embedding_model()
-    embeddings = model.encode(texts, normalize_embeddings=True)
-    return embeddings.tolist()
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    """Embed knowledge-base chunks (documents)."""
+    response = co.embed(
+        texts=texts,
+        model="embed-english-v3.0",
+        input_type="search_document",
+    )
+    return _normalize(response.embeddings)
 
 
-def embed_query(text: str) -> List[float]:
-    return embed_texts([text])[0]
+def embed_query(text: str) -> list[float]:
+    """Embed a single user query."""
+    response = co.embed(
+        texts=[text],
+        model="embed-english-v3.0",
+        input_type="search_query",
+    )
+    return _normalize(response.embeddings)[0]
