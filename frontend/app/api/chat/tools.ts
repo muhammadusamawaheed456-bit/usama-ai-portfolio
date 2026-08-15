@@ -1,3 +1,8 @@
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.API_URL ||
+  "http://localhost:8000";
+
 export async function searchKnowledgeExecute(query: string) {
   try {
     const response = await fetch(`${API_URL}/api/chat`, {
@@ -31,7 +36,6 @@ export async function searchKnowledgeExecute(query: string) {
       reply: data.reply,
       sources: data.sources ?? [],
     };
-
   } catch (error) {
     console.error(
       "Knowledge Search Error:",
