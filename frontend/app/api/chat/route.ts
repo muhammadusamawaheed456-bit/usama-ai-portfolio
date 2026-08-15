@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { searchKnowledgeExecute } from "./tools";
 
 export async function POST(req: NextRequest) {
-  try {
+  try { 
     const body = await req.json();
 
     const { message } = body;
