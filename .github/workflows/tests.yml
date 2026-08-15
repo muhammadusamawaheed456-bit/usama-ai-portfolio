@@ -34,5 +34,14 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright
+      - name: Build Next.js application
+        run: npm run build
+
+      - name: Start Next.js application
+        run: npm run start > nextjs.log 2>&1 &
+
+      - name: Wait for Next.js
+        run: npx wait-on http://127.0.0.1:3000
+
+      - name: Run Playwright tests
         run: npx playwright test
